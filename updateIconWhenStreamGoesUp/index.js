@@ -3,6 +3,7 @@
 const config = require('./config.megadrive.json')
 
 const axios = require('axios') // http
+const { fs } = require('mz')
 const Jimp = require('jimp') // image manip
 
 const Discord = require('discord.js')
@@ -22,7 +23,7 @@ discord.on('ready', () => {
     responseType: 'stream'
   })
     .then(response => {
-      // response.data.pipe(fs.createWriteStream(`./icons/${config.discord.server.id}`))
+      response.data.pipe(fs.createWriteStream(`./icons/${config.discord.server.id}`))
       console.log(`saved original icon for ${guild.name}`)
 
       poll()
