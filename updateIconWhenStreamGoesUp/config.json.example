@@ -1,0 +1,15 @@
+{
+  "twitch": {
+    "channel": "twitch_channel",
+    "clientid": "twitch_app_id"
+  },
+  "discord": {
+    "token": "discord_bot_or_user_token",
+    "server": {
+      "id": "discord_server_id"
+    },
+    "channel": {
+      "id": "discord_channel_id"
+    }
+  }
+}
