@@ -1,6 +1,6 @@
 'use strict'
 
-const config = require('./config.megadrive.json')
+const config = require('./config.json')
 
 const axios = require('axios') // http
 const { fs } = require('mz')
@@ -91,8 +91,6 @@ function poll () {
     })
 }
 
-function startPollingTwitch () {
+(function startPollingTwitch () {
   setInterval(poll, 30 * 1000)
-}
-
-startPollingTwitch()
+})()
