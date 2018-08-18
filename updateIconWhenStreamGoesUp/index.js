@@ -2,9 +2,11 @@
 
 const config = require('./config.json')
 
+const path = require('path') // paths
+const dayjs = require('dayjs') // dates
 const axios = require('axios') // http
-const { fs } = require('mz')
-const Jimp = require('jimp') // image manip
+const { fs } = require('mz') // promise-based fs
+const Jimp = require('jimp') // image manipulation
 
 const Discord = require('discord.js')
 const discord = new Discord.Client()
@@ -12,9 +14,30 @@ discord.login(config.discord.token)
 
 let currentlyOnline = false
 
-discord.on('ready', () => {
-  console.log(`Logged in as ${discord.user.tag}`)
+/**
+ * Log a console message with a timestamp.
+ *
+ * @param {*} args
+ */
+function log (...args) {
+  console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}]`, ...args)
+}
 
+/**
+ * Log an error console message with a timestamp.
+ *
+ * @param {*} args
+ */
+function error (...args) {
+  console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}]`, ...args)
+}
+
+discord.on('ready', () => {
+  log(`Logged in as ${discord.user.tag}`)
+
+  /**
+   * Save the original guild icon so we can restore it later.
+   */
   const guild = discord.guilds.get(config.discord.server.id)
   const iconUrl = guild.iconURL
   axios({
@@ -23,15 +46,44 @@ discord.on('ready', () => {
     responseType: 'stream'
   })
     .then(response => {
-      response.data.pipe(fs.createWriteStream(`./icons/${config.discord.server.id}`))
-      console.log(`saved original icon for ${guild.name}`)
+      response.data.pipe(fs.createWriteStream(path.join('icons', config.discord.server.id)))
+      log(`saved original icon for ${guild.name}`)
 
+      // Do an initial poll.
       poll()
     })
 })
 
+/**
+ * Announce that the Twitch channel is live to Discord.
+ *
+ * @param {JSON} twitchApiResult JSON data from the `streams` endpoint.
+ */
+function announceLiveToChannel (twitchApiResult) {
+  const streamData = twitchApiResult[0]
+
+  const gameName = streamData.game
+  const name = streamData.channel.display_name
+
+  const template = `${name} just went live on Twitch playing ${gameName}: "${streamData.channel.status}" ${streamData.channel.url}`
+
+  const guild = discord.guilds.get(config.discord.server.id)
+  if (guild) {
+    const channel = guild.channels.get(config.discord.channel.id)
+    if (channel) {
+      channel.send(template)
+        .then(message => log(`Sent message on ${message.guild.name} - ${message.channel.name}: ${message.content}`))
+        .catch(console.error)
+    } else {
+      error(`[Error] Channel provided in config doesn't exist in the guild provided.`)
+    }
+  } else {
+    error(`[Error] Bot isn't authenticated to the Guild ID provided in config.`)
+  }
+}
+
 function poll () {
-  console.log(`Polling Twitch for ${config.twitch.channel}`)
+  log(`Polling Twitch for ${config.twitch.channel}`)
 
   axios.get(`https://api.twitch.tv/kraken/streams`, {
     params: {
@@ -40,25 +92,34 @@ function poll () {
     }
   })
     .then(r => {
-      const channel = r.data.streams.map(function (el) {
-        return (el.channel.name.toLowerCase() === config.twitch.channel)
+      // Get an array of the live channels that aren't playing a playlist.
+      const channel = r.data.streams.filter(function (el) {
+        return (el.channel.name.toLowerCase() === config.twitch.channel) &&
+          el.stream_type === 'live' // no playlists
       })
 
       const guild = discord.guilds.get(config.discord.server.id)
       if (channel.length) {
-        console.log(`twitch says ${config.twitch.channel} is ONLINE`)
+        log(`twitch says ${config.twitch.channel} is ONLINE`)
         if (currentlyOnline === false) {
           currentlyOnline = true
 
-          console.log(`${config.twitch.channel}: change icon to LIVE`)
-          Jimp.read(`./icons/${config.discord.server.id}`)
+          announceLiveToChannel(channel)
+
+          log(`${config.twitch.channel}: change icon to LIVE`)
+          // Get the current guild icon ..
+          Jimp.read(path.join('icons', config.discord.server.id))
             .then(icon => {
-              Jimp.read(`./live_overlay.png`)
+              // Get the image we will overlay
+              Jimp.read(path.join(`live_overlay.png`))
                 .then(liveOverlay => {
+                  // Image manipulation, scale the overlay to fit the icon and
+                  // composite it over the current icon.
                   liveOverlay.scaleToFit(icon.getWidth(), icon.getHeight())
                   icon.composite(liveOverlay, 0, (icon.getHeight() / 2) - liveOverlay.getHeight() / 2)
 
-                  icon.getBase64Async('image/png')
+                  // Get the base64 of the icon, then upload the new icon.
+                  icon.getBase64Async(icon.getMIME())
                     .then(base64 => {
                       if (guild) {
                         guild.edit({
@@ -71,14 +132,15 @@ function poll () {
             })
         }
       } else {
-        console.log(`twitch says ${config.twitch.channel} is OFFLINE`)
+        log(`twitch says ${config.twitch.channel} is OFFLINE`)
 
         if (currentlyOnline) {
           currentlyOnline = false
 
-          console.log(`${guild.name}: change icon to ORIGINAL`)
+          // Get the original icon and restore it to the guild.
+          log(`${guild.name}: change icon to ORIGINAL`)
           Jimp
-            .read(`./icons/${config.discord.server.id}`)
+            .read(path.join('icons', config.discord.server.id))
             .then(icon => icon.getBase64Async(icon.getMIME()))
             .then(originalIcon => {
               guild.edit({
@@ -89,8 +151,10 @@ function poll () {
         }
       }
     })
+    .catch(console.error)
 }
 
+// Begin polling twitch in 30 second intervals.
 (function startPollingTwitch () {
   setInterval(poll, 30 * 1000)
 })()
