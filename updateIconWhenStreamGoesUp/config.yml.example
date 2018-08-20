@@ -1,0 +1,6 @@
+# Twitch specific values.
+twitch:
+  # Channel name to follow its uptime.
+  channel: channelName
+  # Your Twitch app's client id
+  clientid: yourAppClientId

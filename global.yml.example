@@ -1,0 +1,8 @@
+# Your global bot config values are here.
+# Any specific per-script live in their folders.
+discord:
+  token: yourBotOrUserToken
+  server:
+    id: "serverIdNumber"
+  channel:
+    id: "channelIdNumber"

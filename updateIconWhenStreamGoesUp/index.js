@@ -1,8 +1,9 @@
 'use strict'
 
-const config = require('./config.json')
-
 const path = require('path') // paths
+
+const config = require('../config.js')(path.join(__dirname, 'config.yml'))
+
 const dayjs = require('dayjs') // dates
 const axios = require('axios') // http
 const { fs } = require('mz') // promise-based fs
@@ -46,7 +47,7 @@ discord.on('ready', () => {
     responseType: 'stream'
   })
     .then(response => {
-      response.data.pipe(fs.createWriteStream(path.join('icons', config.discord.server.id)))
+      response.data.pipe(fs.createWriteStream(path.join(__dirname, 'icons', config.discord.server.id)))
       log(`saved original icon for ${guild.name}`)
 
       // Do an initial poll.
