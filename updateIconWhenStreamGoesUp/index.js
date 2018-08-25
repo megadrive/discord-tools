@@ -8,6 +8,7 @@ const dayjs = require('dayjs') // dates
 const axios = require('axios') // http
 const { fs } = require('mz') // promise-based fs
 const Jimp = require('jimp') // image manipulation
+const chalk = require('chalk') // console colouration
 
 const Discord = require('discord.js')
 const discord = new Discord.Client()
@@ -30,29 +31,50 @@ function log (...args) {
  * @param {*} args
  */
 function error (...args) {
-  console.log(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}]`, ...args)
+  console.error(chalk.red(`[${dayjs().format('YYYY-MM-DD HH:mm:ss')}]`, ...args))
+}
+
+/**
+ * Save the original guild icon so we can restore it later.
+ */
+function saveDiscordIconToDisk () {
+  const guild = discord.guilds.get(config.discord.server.id)
+  const iconUrl = guild.iconURL
+
+  return new Promise((resolve, reject) => {
+    axios({
+      method: 'get',
+      url: iconUrl,
+      responseType: 'stream'
+    })
+      .then(response => {
+        response.data.pipe(fs.createWriteStream(path.join(__dirname, 'icons', config.discord.server.id)))
+        log(`saved original icon for ${guild.name}`)
+
+        resolve()
+      })
+  })
 }
 
 discord.on('ready', () => {
   log(`Logged in as ${discord.user.tag}`)
 
-  /**
-   * Save the original guild icon so we can restore it later.
-   */
-  const guild = discord.guilds.get(config.discord.server.id)
-  const iconUrl = guild.iconURL
-  axios({
-    method: 'get',
-    url: iconUrl,
-    responseType: 'stream'
-  })
-    .then(response => {
-      response.data.pipe(fs.createWriteStream(path.join(__dirname, 'icons', config.discord.server.id)))
-      log(`saved original icon for ${guild.name}`)
-
+  saveDiscordIconToDisk()
+    .then(() => {
       // Do an initial poll.
       poll()
     })
+})
+
+discord.on('message', message => {
+  if (config.discord.admins.includes(message.author.id)) {
+    if (message.content.startsWith('!!resave')) {
+      saveDiscordIconToDisk()
+        .then(() => {
+          message.channel.send('Saved current icon to disk.')
+        })
+    }
+  }
 })
 
 /**
