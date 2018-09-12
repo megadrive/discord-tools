@@ -1,0 +1,47 @@
+quiz:
+  discord:
+    guild: 'your guild id'
+    channel: 'your channel id'
+  name: 'Thesaur-what?'
+  description: 'Guess the game name from the clues given. The game name is put through word by word through a thesaurus!'
+  gameNames:
+    - grand theft auto
+    - super mario bros
+    - sonic the hedgehog
+    - world of warcraft
+    - league of legends
+    - spider-man
+    - destiny
+    - rocket league
+    - super mario odyssey
+    - god of war
+    - detroit become human
+    - far cry
+    - clash royale
+    - bust-a-move
+    - tetris
+    - duck hunt
+    - call of duty modern warfare
+    - call of duty black ops
+    - mario kart
+    - super mario world
+    - lemmings
+    - brain age
+    - super mario land
+    - the last of us
+    - the sims
+    - need for speed most wanted
+    - red dead redemption
+    - battlefield
+    - gran turismo
+    - final fantasy
+    - tomb raider
+    - crash bandicoot
+    - metal gear solid
+    - resident evil
+    - driver
+    - crash team racing
+    - crash bash
+    - twisted metal
+    - medal of honor
+    - a bug's life
