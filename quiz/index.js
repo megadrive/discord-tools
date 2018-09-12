@@ -160,7 +160,7 @@ function generateQuestion () {
     const base = 'https://api.datamuse.com/words?ml='
     function getSynonym (word) {
       return new Promise((resolve, reject) => {
-        if (ignoredWords.includes(word)) {
+        if (ignoredWords.includes(word) || word.length <= 2) {
           resolve(word)
         } else {
           axios.get(base + word)
