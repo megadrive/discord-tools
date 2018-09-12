@@ -25,6 +25,7 @@ let globals = {
 }
 
 const chatter = {
+  ready: `**Ready to quiz?** !startquiz to start!`,
   start: `Starting quiz: {quizName} -- {quizDescription}`,
   ask: `What game is this? {gameName}`,
   confirmed: `{name} got it! They now have {points} points. Another question is on its way!`,
@@ -53,6 +54,10 @@ function error (...args) {
 
 discord.on('ready', () => {
   log(`Logged in as ${discord.user.tag}, ready to quiz!`)
+  discord
+    .guilds.get(config.discord.guild)
+    .channels.get(config.discord.channels)
+    .send(chatter.ready)
 })
 
 discord.on('message', message => {
