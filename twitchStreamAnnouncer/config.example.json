@@ -1,0 +1,8 @@
+{
+    "discord": {
+        "token": "",
+        "server": {"id": ""},
+        "channel": {"id": ""},
+        "roleToAssign": ""
+    }
+}
