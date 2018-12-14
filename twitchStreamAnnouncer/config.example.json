@@ -4,5 +4,9 @@
         "server": {"id": ""},
         "channel": {"id": ""},
         "roleToAssign": ""
+    },
+    "twitch": {
+      "clientid": "",
+      "oauth": ""
     }
 }
